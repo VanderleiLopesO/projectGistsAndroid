@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">ProjectGistsAndroid</string>
+    <string name="generic_error_text">Algo deu errado! Tente novamente!</string>
+</resources>
