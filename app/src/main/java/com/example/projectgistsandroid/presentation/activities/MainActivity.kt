@@ -1,22 +1,24 @@
 package com.example.projectgistsandroid.presentation.activities
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import androidx.lifecycle.Observer
-import com.example.projectgistsandroid.R
-import com.example.projectgistsandroid.data.repositories.interfaces.GistRepository
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.projectgistsandroid.databinding.ActivityMainBinding
-import com.example.projectgistsandroid.domain.usecases.interfaces.GetGists
+import com.example.projectgistsandroid.presentation.adapters.MainAdapter
+import com.example.projectgistsandroid.presentation.adapters.viewholders.OnItemClickListener
+import com.example.projectgistsandroid.presentation.entities.PresentationEntities
+import com.example.projectgistsandroid.presentation.entities.ViewError
+import com.example.projectgistsandroid.presentation.entities.ViewGist
+import com.example.projectgistsandroid.presentation.entities.ViewLoading
 import com.example.projectgistsandroid.presentation.viewmodels.Loaded
 import com.example.projectgistsandroid.presentation.viewmodels.Loading
 import com.example.projectgistsandroid.presentation.viewmodels.MainViewModel
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
-import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), OnItemClickListener {
 
     private val viewModel: MainViewModel by viewModel()
     private lateinit var binding: ActivityMainBinding
@@ -26,7 +28,43 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setUpRecyclerView()
         setUpViewModel()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        viewModel.saveViewModelState()
+
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun setUpRecyclerView() {
+        binding.gistsRecyclerView.apply {
+
+            val mainAdapter = MainAdapter()
+            mainAdapter.listener = this@MainActivity
+
+            adapter = mainAdapter
+            setHasFixedSize(true)
+            layoutManager = LinearLayoutManager(this@MainActivity)
+
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    if (dy > 0) {
+                        val visibleItemCount = (layoutManager as LinearLayoutManager).childCount
+                        val totalItemCount = (layoutManager as LinearLayoutManager).itemCount
+                        val pastVisibleItems =
+                            (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                        if (visibleItemCount + pastVisibleItems >= totalItemCount) {
+                            if ((viewModel.page < viewModel.data.value?.size!!) &&
+                                viewModel.nextPageStatus.value != Loading) {
+                                viewModel.requestNextPageData()
+                            }
+                        }
+                    }
+                }
+            })
+        }
     }
 
     private fun setUpViewModel() {
@@ -34,7 +72,7 @@ class MainActivity : AppCompatActivity() {
         viewModel.run {
             requestData()
 
-            status.observe(this@MainActivity, Observer {
+            status.observe(this@MainActivity, {
                 when (it) {
                     Loading -> showProgressBar()
                     Loaded -> showRepositories()
@@ -42,20 +80,22 @@ class MainActivity : AppCompatActivity() {
                 }
             })
 
-            nextPageData.observe(this@MainActivity, Observer { items ->
+            nextPageData.observe(this@MainActivity, { items ->
                 val tempList = (binding.gistsRecyclerView.adapter as MainAdapter).list
 
                 items?.forEach {
-                    tempList.add(it)
-                    data.value?.plus(it)
-                    (binding.gistsRecyclerView.adapter as MainAdapter).apply {
-                        list = tempList
-                        notifyDataSetChanged()
+                    it?.let {
+                        tempList.add(it)
+                        data.value?.plus(it)
+                        (binding.gistsRecyclerView.adapter as MainAdapter).apply {
+                            list = tempList
+                            notifyDataSetChanged()
+                        }
                     }
                 }
             })
 
-            nextPageStatus.observe(this@MainActivity, Observer {
+            nextPageStatus.observe(this@MainActivity, {
                 when (it) {
                     Loading -> showPaginationLoading()
                     Loaded -> hidePaginationLoading()
@@ -76,14 +116,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun showPaginationLoading() {
         (binding.gistsRecyclerView.adapter as MainAdapter).apply {
-            list.add(LoadingItem)
+            list.add(ViewLoading)
             notifyDataSetChanged()
         }
     }
 
     private fun hidePaginationLoading() {
         (binding.gistsRecyclerView.adapter as MainAdapter).apply {
-            list.remove(LoadingItem)
+            list.remove(ViewLoading)
             notifyDataSetChanged()
         }
     }
@@ -92,22 +132,33 @@ class MainActivity : AppCompatActivity() {
         hidePaginationLoading()
 
         (binding.gistsRecyclerView.adapter as MainAdapter).apply {
-            list.add(ErrorItem)
+            list.add(ViewError)
             notifyDataSetChanged()
         }
     }
 
     private fun hidePaginationError() {
         (binding.gistsRecyclerView.adapter as MainAdapter).apply {
-            list.remove(ErrorItem)
+            list.remove(ViewError)
             notifyDataSetChanged()
         }
     }
 
     private fun showRepositories() {
-        viewModel.data.value?.let {
+        println("DEUBOMMMMMMMMMMMMMM ======= TUTUSTUUSTUSUTUSTUSUTUSTS")
+
+        viewModel.data.value?.let { list ->
             if (viewModel.page == 1) {
-                (binding.gistsRecyclerView.adapter as MainAdapter).list = it.items.toMutableList()
+                    list.toMutableList().let { it ->
+                        val resultList = mutableListOf<PresentationEntities>()
+                        it.forEach {
+                            it?.let {
+                                resultList.add(it)
+                            }
+                        }
+
+                        (binding.gistsRecyclerView.adapter as MainAdapter).list = resultList
+                    }
             }
 
             binding.progressBar.visibility = View.GONE
@@ -128,5 +179,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onGistClicked(gist: ViewGist) {
+        startActivity(Intent(this, DetailsActivity::class.java))
+    }
+
+    override fun onRetryRequestClicked() {
+        viewModel.retryRequest(false)
+    }
 
 }

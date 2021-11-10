@@ -4,8 +4,8 @@ import android.annotation.SuppressLint
 import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.SavedStateHandle
-import com.example.projectgistsandroid.domain.entities.GistItem
 import com.example.projectgistsandroid.domain.usecases.interfaces.GetGists
+import com.example.projectgistsandroid.presentation.entities.PresentationEntities
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -21,8 +21,8 @@ class MainViewModel(
         STATUS_LIVE_DATA,
         None
     )
-    private val _data = savedStateHandle.getLiveData<List<GistItem?>>(DATA_LIVE_DATA, null)
-    private val _nextPageData = savedStateHandle.getLiveData<List<GistItem?>?>(NEXT_PAGE_DATA_LIVE_DATA, null)
+    private val _data = savedStateHandle.getLiveData<List<PresentationEntities?>>(DATA_LIVE_DATA, null)
+    private val _nextPageData = savedStateHandle.getLiveData<List<PresentationEntities?>?>(NEXT_PAGE_DATA_LIVE_DATA, null)
     private val _nextPageStatus = savedStateHandle.getLiveData<RequestStatus>(
         NEXT_PAGE_STATUS_LIVE_DATA,
         None
@@ -31,10 +31,10 @@ class MainViewModel(
     val status: LiveData<RequestStatus>
         get() = _status
 
-    val data: LiveData<List<GistItem?>?>
+    val data: LiveData<List<PresentationEntities?>?>
         get() = _data
 
-    val nextPageData: LiveData<List<GistItem?>?>
+    val nextPageData: LiveData<List<PresentationEntities?>?>
         get() = _nextPageData
 
     val nextPageStatus: LiveData<RequestStatus>
@@ -77,6 +77,10 @@ class MainViewModel(
     }
 
     fun retryRequest(isFirstPage: Boolean) {
+        val status = if (isFirstPage) _status else _nextPageStatus
+
+        status.postValue(Loading)
+
         if (isFirstPage) {
             requestData()
         } else {

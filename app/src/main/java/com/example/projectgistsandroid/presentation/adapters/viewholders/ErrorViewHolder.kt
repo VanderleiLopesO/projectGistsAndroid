@@ -1,13 +1,16 @@
 package com.example.projectgistsandroid.presentation.adapters.viewholders
 
-import android.view.View
+import com.example.projectgistsandroid.databinding.ErrorListItemBinding
 
-class ErrorViewHolder(itemView: View, private val listener: OnItemClickListener) :
-    BaseBrowserViewHolder(itemView) {
+class ErrorViewHolder(
+    private val binding: ErrorListItemBinding,
+    private val listener: OnItemClickListener
+) :
+    BaseBrowserViewHolder(binding) {
 
     override fun bind(item: Any, position: Int) {
         itemView.apply {
-            errorText.setOnClickListener {
+            binding.errorText.setOnClickListener {
                 listener.onRetryRequestClicked()
             }
         }

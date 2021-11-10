@@ -1,33 +1,33 @@
-package com.lopessoft.projectgithublabs.presentation.adapters.viewholders
+package com.example.projectgistsandroid.presentation.adapters.viewholders
 
-import android.view.View
-import com.example.projectgistsandroid.presentation.adapters.viewholders.BaseBrowserViewHolder
-import com.example.projectgistsandroid.presentation.adapters.viewholders.OnItemClickListener
-import com.lopessoft.projectgithublabs.domain.entities.Item
-import com.lopessoft.projectgithublabs.presentation.extensions.loadImage
-import kotlinx.android.synthetic.main.repository_list_item.view.*
+import android.content.Context
+import com.example.projectgistsandroid.databinding.RepositoryListItemBinding
+import com.example.projectgistsandroid.presentation.entities.ViewGist
+import com.example.projectgistsandroid.presentation.extensions.loadImage
 import java.lang.Exception
 
-class RepositoryViewHolder(itemView: View, private val listener: OnItemClickListener?) :
-    BaseBrowserViewHolder(itemView) {
+class GistViewHolder(
+    private val context: Context,
+    private val binding: RepositoryListItemBinding,
+    private val listener: OnItemClickListener?
+) :
+    BaseBrowserViewHolder(binding) {
 
     override fun bind(item: Any, position: Int) {
         try {
-            val currentItem = (item as Item)
+            val currentItem = (item as ViewGist)
 
-            itemView.run {
-                repositoryNameTextView.text = currentItem.name
+            binding.run {
+                repositoryNameTextView.text = currentItem.type
                 repositoryDescriptionTextView.text = currentItem.description
-                repositoryForksTextView.text = currentItem.forks.toString()
-                repositoryStarsTextView.text = currentItem.starsCount.toString()
-                repositoryOwnerLoginTextView.text = currentItem.owner.name
+                repositoryOwnerLoginTextView.text = currentItem.ownerLogin
+                repositoryUserImage.loadImage(currentItem.ownerAvatarUrl, context)
 
-                repositoryUserImage.loadImage(currentItem.owner.image, context)
-
-                setOnClickListener {
-                    listener?.onRepositoryClicked(currentItem.owner.name, currentItem.name)
+                repositoryCellRoot.setOnClickListener {
+                    listener?.onGistClicked(currentItem)
                 }
             }
+
         } catch (e: Exception) {
             throw Exception(e)
         }

@@ -3,17 +3,18 @@ package com.example.projectgistsandroid.presentation.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.projectgistsandroid.R
-import com.example.projectgistsandroid.domain.entities.GistItem
-import com.example.projectgistsandroid.presentation.adapters.viewholders.BaseBrowserViewHolder
-import com.example.projectgistsandroid.presentation.adapters.viewholders.ErrorViewHolder
-import com.example.projectgistsandroid.presentation.adapters.viewholders.LoadingViewHolder
-import com.example.projectgistsandroid.presentation.adapters.viewholders.OnItemClickListener
-import com.lopessoft.projectgithublabs.presentation.adapters.viewholders.*
+import com.example.projectgistsandroid.databinding.ErrorListItemBinding
+import com.example.projectgistsandroid.databinding.LoadingListItemBinding
+import com.example.projectgistsandroid.databinding.RepositoryListItemBinding
+import com.example.projectgistsandroid.presentation.adapters.viewholders.*
+import com.example.projectgistsandroid.presentation.entities.PresentationEntities
+import com.example.projectgistsandroid.presentation.entities.ViewError
+import com.example.projectgistsandroid.presentation.entities.ViewGist
+import com.example.projectgistsandroid.presentation.entities.ViewLoading
 
 class MainAdapter : RecyclerView.Adapter<BaseBrowserViewHolder>() {
 
-    var list = mutableListOf<GistItem>()
+    var list = mutableListOf<PresentationEntities>()
         set(value) {
             field = value
             notifyDataSetChanged()
@@ -23,23 +24,20 @@ class MainAdapter : RecyclerView.Adapter<BaseBrowserViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseBrowserViewHolder =
         when (viewType) {
-            REPOSITORY_TYPE -> RepositoryViewHolder(
-                LayoutInflater.from(parent.context)
-                    .inflate(R.layout.repository_list_item, parent, false),
-                listener
-            )
-            PULL_REQUEST_TYPE -> PullRequestViewHolder(
-                LayoutInflater.from(parent.context)
-                    .inflate(R.layout.pull_request_list_item, parent, false),
+            GIST_TYPE -> GistViewHolder(
+                parent.context,
+                RepositoryListItemBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                ),
                 listener
             )
             LOADING_TYPE -> LoadingViewHolder(
-                LayoutInflater.from(parent.context)
-                    .inflate(R.layout.loading_list_item, parent, false)
+                LoadingListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             )
             else -> ErrorViewHolder(
-                LayoutInflater.from(parent.context)
-                    .inflate(R.layout.error_list_item, parent, false),
+                ErrorListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false),
                 listener
             )
         }
@@ -49,19 +47,17 @@ class MainAdapter : RecyclerView.Adapter<BaseBrowserViewHolder>() {
     override fun onBindViewHolder(holder: BaseBrowserViewHolder, position: Int) =
         holder.bind(list[position], position)
 
-    override fun getItemViewType(position: Int): Int =
+    override fun getItemViewType(position: Int) =
         when (list[position]) {
-            is Item -> REPOSITORY_TYPE
-            is PullRequestItem -> PULL_REQUEST_TYPE
-            is LoadingItem -> LOADING_TYPE
-            is ErrorItem -> ERROR_TYPE
+            is ViewGist -> GIST_TYPE
+            is ViewError -> ERROR_TYPE
+            is ViewLoading -> LOADING_TYPE
         }
 
     companion object {
-        const val REPOSITORY_TYPE = 0
-        const val PULL_REQUEST_TYPE = 1
+        const val GIST_TYPE = 0
+        const val ERROR_TYPE = 1
         const val LOADING_TYPE = 2
-        const val ERROR_TYPE = 3
     }
 
 }
